@@ -31,6 +31,8 @@ void recv_msg_handler() {
         if (receive > 0) {
             printf("\r%s\n", receiveMessage);
             str_overwrite_stdout();
+	    int num = atoi(receiveMessage);
+            print_matrix(num);
         } else if (receive == 0) {
             break;
         } else { 
@@ -52,11 +54,43 @@ void send_msg_handler() {
             }
         }
         send(sockfd, message, LENGTH_MSG, 0);
+        int num = atoi(message);
+        print_matrix(num);
         if (strcmp(message, "exit") == 0) {
             break;
         }
     }
     catch_ctrl_c_and_exit(2);
+}
+
+void print_matrix(int number)
+{
+    int i, j;
+
+    //system("clear"); 
+    printf("%c[1;33m",27); 
+    printf("Your matrix:\n");
+    printf("+----+----+----+----+----+\n"); 
+    for(i=0; i < BOARD_SIZE; i++)
+    {
+        for(j=0; j < BOARD_SIZE; j++)
+        {
+            if(board[i][j]==number)
+                board[i][j]=0;
+            if(board[i][j]==0)
+            {
+                printf("| ");
+                printf("%c[1;31m",27);
+                printf("%2c ", 88); 
+                printf("%c[1;33m",27);
+            }
+            else
+                printf("| %2d ", board[i][j]); 
+        }
+        printf("|\n");
+        printf("+----+----+----+----+----+\n"); 
+    }      
+    printf("%c[0m", 27);
 }
 
 int main()
@@ -106,6 +140,7 @@ int main()
 
     send(sockfd, nickname, LENGTH_NAME, 0);
 
+    // Nhap matric
     printf("Enter 25 numbers from 1 to 25\n");
     int m=0;
     for(int i = 0;i < BOARD_SIZE; ++i){
@@ -121,7 +156,7 @@ int main()
                 for(int k = 0; k < m; ++k){
                     for (int h = 0; h < k; ++h)
                     {
-                        if (array[h] == array[k] || array[h]<1 || array[h]>25){
+                        if ((array[h] == array[k]) || (array[k] < 1) || (array[k] > 25)){
                             check = 1;
                         }
                     }
@@ -134,17 +169,8 @@ int main()
             }while(check == 1);
         }
     }
-    printf("Your matrix:\n");
-    printf("+----+----+----+----+----+\n"); 
-    for(int i=0; i < BOARD_SIZE; i++)
-    {
-        for(int j=0; j < BOARD_SIZE; j++)
-        {
-                printf("| %2d ", board[i][j]); 
-        }
-        printf("|\n");
-        printf("+----+----+----+----+----+\n"); 
-    }      
+
+    print_matrix(0);
 
     pthread_t send_msg_thread;
     if (pthread_create(&send_msg_thread, NULL, (void *) send_msg_handler, NULL) != 0) {
