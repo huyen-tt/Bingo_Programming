@@ -13,6 +13,7 @@
 
 // Global variables
 int server_sockfd = 0, client_sockfd = 0;
+int lastest_player = 0;
 ClientList *root, *now;
 
 void catch_ctrl_c_and_exit(int sig) {
@@ -59,6 +60,7 @@ void client_handler(void *p_client) {
 
     // Conversation
     while (1) {
+
         if (leave_flag) {
             break;
         }
@@ -68,6 +70,13 @@ void client_handler(void *p_client) {
                 continue;
             }
             sprintf(send_buffer, "%s",recv_buffer);
+            if (lastest_player != np->data){
+                sprintf(send_buffer, "%s", recv_buffer);
+            }
+            else{
+                printf("Not turn!\n");
+                continue;
+            }
         } else if (receive == 0 || strcmp(recv_buffer, "exit") == 0) {
             printf("%s(%s)(%d) leave the game.\n", np->name, np->ip, np->data);
             sprintf(send_buffer, "%s(%s) leave the game.", np->name, np->ip);
@@ -77,6 +86,7 @@ void client_handler(void *p_client) {
             leave_flag = 1;
         }
         send_to_all_clients(np, send_buffer);
+        lastest_player = np->data;
     }
 
     // Remove Node
@@ -146,3 +156,4 @@ int main()
 
     return 0;
 }
+
