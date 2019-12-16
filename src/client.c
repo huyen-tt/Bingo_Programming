@@ -11,9 +11,13 @@
 #include "proto.h"
 #include "string.h"
 
+#define BOARD_SIZE 5
+
 // Global variables
 volatile sig_atomic_t flag = 0;
 int sockfd = 0;
+int board[BOARD_SIZE][BOARD_SIZE];
+int array[BOARD_SIZE*BOARD_SIZE];
 char nickname[LENGTH_NAME] = {};
 
 void catch_ctrl_c_and_exit(int sig) {
@@ -75,6 +79,7 @@ int main()
         printf("Fail to create a socket.");
         exit(EXIT_FAILURE);
     }
+    
 
     // Socket information
     struct sockaddr_in server_info, client_info;
@@ -100,6 +105,46 @@ int main()
     printf("You are: %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
 
     send(sockfd, nickname, LENGTH_NAME, 0);
+
+    printf("Enter 25 numbers from 1 to 25\n");
+    int m=0;
+    for(int i = 0;i < BOARD_SIZE; ++i){
+        for (int j = 0; j < BOARD_SIZE; ++j)
+        {
+            int check;
+            do{
+                check =0;
+                printf("[%d, %d]= ", i,j);
+                scanf("%d",&board[i][j]);
+                array[m] = board[i][j];
+                m++;
+                for(int k = 0; k < m; ++k){
+                    for (int h = 0; h < k; ++h)
+                    {
+                        if (array[h] == array[k] || array[h]<1 || array[h]>25){
+                            check = 1;
+                        }
+                    }
+                }
+                if (check ==1 ){
+                    printf("Nhap lai\n");
+                    --m;
+                }
+                    
+            }while(check == 1);
+        }
+    }
+    printf("Your matrix:\n");
+    printf("+----+----+----+----+----+\n"); 
+    for(int i=0; i < BOARD_SIZE; i++)
+    {
+        for(int j=0; j < BOARD_SIZE; j++)
+        {
+                printf("| %2d ", board[i][j]); 
+        }
+        printf("|\n");
+        printf("+----+----+----+----+----+\n"); 
+    }      
 
     pthread_t send_msg_thread;
     if (pthread_create(&send_msg_thread, NULL, (void *) send_msg_handler, NULL) != 0) {
