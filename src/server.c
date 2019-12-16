@@ -13,6 +13,7 @@
 
 // Global variables
 int server_sockfd = 0, client_sockfd = 0;
+int lastest_player = 0;
 ClientList *root, *now;
 
 void catch_ctrl_c_and_exit(int sig) {
@@ -59,6 +60,7 @@ void client_handler(void *p_client) {
 
     // Conversation
     while (1) {
+
         if (leave_flag) {
             break;
         }
@@ -67,7 +69,13 @@ void client_handler(void *p_client) {
             if (strlen(recv_buffer) == 0) {
                 continue;
             }
-            sprintf(send_buffer, "%s：%s from %s", np->name, recv_buffer, np->ip);
+            if (lastest_player != np->data){
+                sprintf(send_buffer, "%s：%s from %s", np->name, recv_buffer, np->ip);
+            }
+            else{
+                printf("Not turn!\n");
+                continue;
+            }
         } else if (receive == 0 || strcmp(recv_buffer, "exit") == 0) {
             printf("%s(%s)(%d) leave the chatroom.\n", np->name, np->ip, np->data);
             sprintf(send_buffer, "%s(%s) leave the chatroom.", np->name, np->ip);
@@ -77,6 +85,7 @@ void client_handler(void *p_client) {
             leave_flag = 1;
         }
         send_to_all_clients(np, send_buffer);
+        lastest_player = np->data;
     }
 
     // Remove Node
