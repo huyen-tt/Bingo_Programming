@@ -32,10 +32,10 @@ void catch_ctrl_c_and_exit(int sig) {
 void send_to_all_clients(ClientList *np, char tmp_buffer[]) {
     ClientList *tmp = root->link;
     while (tmp != NULL) {
-        if (np->data != tmp->data) { // all clients except itself.
+        // if (np->data != tmp->data) { // all clients except itself.
             printf("Send to sockfd %d: \"%s\" \n", tmp->data, tmp_buffer);
             send(tmp->data, tmp_buffer, LENGTH_SEND, 0);
-        }
+       // }
         tmp = tmp->link;
     }
 }
@@ -53,8 +53,8 @@ void client_handler(void *p_client) {
         leave_flag = 1;
     } else {
         strncpy(np->name, nickname, LENGTH_NAME);
-        printf("%s(%s)(%d) join the chatroom.\n", np->name, np->ip, np->data);
-        sprintf(send_buffer, "%s(%s) join the chatroom.", np->name, np->ip);
+        printf("%s(%s)(%d) join the BINGO game.\n", np->name, np->ip, np->data);
+        sprintf(send_buffer, "%s(%s) join the BINGO game.", np->name, np->ip);
         send_to_all_clients(np, send_buffer);
     }
 
@@ -69,16 +69,17 @@ void client_handler(void *p_client) {
             if (strlen(recv_buffer) == 0) {
                 continue;
             }
+            sprintf(send_buffer, "%s",recv_buffer);
             if (lastest_player != np->data){
-                sprintf(send_buffer, "%s：%s from %s", np->name, recv_buffer, np->ip);
+                sprintf(send_buffer, "%s", recv_buffer);
             }
             else{
                 printf("Not turn!\n");
                 continue;
             }
         } else if (receive == 0 || strcmp(recv_buffer, "exit") == 0) {
-            printf("%s(%s)(%d) leave the chatroom.\n", np->name, np->ip, np->data);
-            sprintf(send_buffer, "%s(%s) leave the chatroom.", np->name, np->ip);
+            printf("%s(%s)(%d) leave the game.\n", np->name, np->ip, np->data);
+            sprintf(send_buffer, "%s(%s) leave the game.", np->name, np->ip);
             leave_flag = 1;
         } else {
             printf("Fatal Error: -1\n");
@@ -153,3 +154,4 @@ int main()
 
     return 0;
 }
+
