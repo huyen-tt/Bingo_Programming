@@ -99,7 +99,6 @@ void client_handler(void *p_client) {
     }
     free(np);
 }
-
 int main()
 {
     signal(SIGINT, catch_ctrl_c_and_exit);
@@ -132,7 +131,6 @@ int main()
     // Initial linked list for clients
     root = newNode(server_sockfd, inet_ntoa(server_info.sin_addr));
     now = root;
-
     while (1) {
         client_sockfd = accept(server_sockfd, (struct sockaddr*) &client_info, (socklen_t*) &c_addrlen);
 
@@ -145,12 +143,12 @@ int main()
         c->prev = now;
         now->link = c;
         now = c;
-
         pthread_t id;
         if (pthread_create(&id, NULL, (void *)client_handler, (void *)c) != 0) {
             perror("Create pthread error!\n");
             exit(EXIT_FAILURE);
         }
+
     }
 
     return 0;
