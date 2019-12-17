@@ -31,8 +31,13 @@ void recv_msg_handler() {
         if (receive > 0) {
             printf("\r%s\n", receiveMessage);
             str_overwrite_stdout();
-	    int num = atoi(receiveMessage);
+            int num = atoi(receiveMessage);
+            board_with_0_number(receiveMessage);
+            int count = check_winner(board);
             print_matrix(num);
+            if(count == 3){
+                printf("Winer\n");
+            }
         } else if (receive == 0) {
             break;
         } else { 
@@ -63,6 +68,20 @@ void send_msg_handler() {
     catch_ctrl_c_and_exit(2);
 }
 
+void board_with_0_number( int number)
+{
+    int i, j;
+    
+    for(i=0; i < BOARD_SIZE; i++)
+    {
+        for(j=0; j < BOARD_SIZE; j++)
+        {
+            if(board[i][j]==number)
+                board[i][j]=0;
+        }
+    }
+}
+
 void print_matrix(int number)
 {
     int i, j;
@@ -71,12 +90,11 @@ void print_matrix(int number)
     printf("%c[1;33m",27); 
     printf("Your matrix:\n");
     printf("+----+----+----+----+----+\n"); 
+    board_with_0_number(number);
     for(i=0; i < BOARD_SIZE; i++)
     {
         for(j=0; j < BOARD_SIZE; j++)
         {
-            if(board[i][j]==number)
-                board[i][j]=0;
             if(board[i][j]==0)
             {
                 printf("| ");
@@ -91,6 +109,27 @@ void print_matrix(int number)
         printf("+----+----+----+----+----+\n"); 
     }      
     printf("%c[0m", 27);
+}
+
+int check_winner(int board[][BOARD_SIZE])
+{
+    int i;
+    int count=0;
+
+    for(i=0; i < BOARD_SIZE; i++)
+    {
+        if(board[i][0]==0&&board[i][1]==0&&board[i][2]==0&&board[i][3]==0&&board[i][4]==0) 
+        {
+            count++;
+        }
+        if(board[0][i]==0&&board[1][i]==0&&board[2][i]==0&&board[3][i]==0&&board[4][i]==0)
+            count++;
+    }
+    if(board[0][0]==0&&board[1][1]==0&&board[2][2]==0&&board[3][3]==0&&board[4][4]==0)
+        count++;
+    if(board[0][4]==0&&board[1][3]==0&&board[2][2]==0&&board[3][1]==0&&board[4][0]==0)
+        count++;
+    return count;
 }
 
 int main()
