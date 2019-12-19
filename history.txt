@@ -1,0 +1,7 @@
+diep 0 1
+huyen 3 4
+nguyen 8 7
+minh 0 5
+hieu 3 1
+nhomnhom 0 0
+vodien 0 0

@@ -10,12 +10,113 @@
 #include <pthread.h>
 #include "proto.h"
 #include "server.h"
+#define FILEHISTORY "history.txt"
+typedef struct 
+{
+    char player[20];
+    int point_win;
+    int point_lose;
+}elementtype;
+#include "linkedlist.h"
+
 
 // Global variables
 int server_sockfd = 0, client_sockfd = 0;
 int lastest_player = 0;
 ClientList *root, *now;
+void getDatatoList(singleList *list,elementtype element){
+    // make null the list
+    deleteSingleList(list);
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"r");
+    // counting the length of this file
+    char c;
+    int count =0;
+    for (c = getc(fp); c != EOF; c = getc(fp)) 
+    {
+        if (c == '\n') // Increment count if this character is newline 
+            count = count + 1; 
+    }
+    fclose(fp);
+    // read the data to list 
+    fp = fopen(FILEHISTORY,"r");
 
+    for(int i=0;i< count + 1;i++){
+        fscanf(fp, "%s %d %d", element.player, &element.point_win, &element.point_lose);
+        insertEnd(list,element);
+    }  
+    fclose(fp);
+}
+int searchData(singleList list, char username[30])  {  
+    list.cur = list.root; 
+    while (list.cur != NULL)  
+    {  
+        if (strcmp(list.cur->element.player, username) == 0)  
+            return 1;  
+        list.cur = list.cur->next;
+    }  
+    return 0;  
+} 
+void add_new_player(char ten[30]){
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"a");
+    fprintf(fp,"\n%s 0 0",ten);
+    fclose(fp);
+} 
+void add_win_game(singleList list,char ten[30]){
+    // Change the status of username in list to 0
+    list.cur = list.root;
+    while(list.cur != NULL){
+        if (strcmp(list.cur->element.player, ten) == 0){
+            list.cur->element.point_win ++;
+            break;
+        }
+        list.cur = list.cur->next;
+    }
+    list.cur = list.root;
+    // rewrite all list to file
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"w");
+    int i =0;
+    while(list.cur!=NULL){
+        if(i == 0){
+            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
+        }
+        else{
+            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
+        }
+        i++;
+        list.cur = list.cur->next;
+    }
+    fclose(fp);
+}
+void add_lose_game(singleList list,char ten[30]){
+    // Change the status of username in list to 0
+    list.cur = list.root;
+    while(list.cur != NULL){
+        if (strcmp(list.cur->element.player, ten) == 0){
+            list.cur->element.point_lose ++;
+            break;
+        }
+        list.cur = list.cur->next;
+    }
+    list.cur = list.root;
+    // rewrite all list to file
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"w");
+    int i =0;
+    while(list.cur!=NULL){
+        if(i == 0){
+            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
+        }
+        else{
+            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
+        }
+        i++;
+        list.cur = list.cur->next;
+    }
+    fclose(fp);
+}
 void catch_ctrl_c_and_exit(int sig) {
     ClientList *tmp;
     while (root != NULL) {
@@ -46,7 +147,11 @@ void client_handler(void *p_client) {
     char recv_buffer[LENGTH_MSG] = {};
     char send_buffer[LENGTH_SEND] = {};
     ClientList *np = (ClientList *)p_client;
-
+    singleList list;
+    createSingleList(&list);
+    elementtype element;
+    getDatatoList(&list,element);
+ 
     // Naming
     if (recv(np->data, nickname, LENGTH_NAME, 0) <= 0 || strlen(nickname) < 2 || strlen(nickname) >= LENGTH_NAME-1) {
         printf("%s didn't input name.\n", np->ip);
@@ -55,6 +160,16 @@ void client_handler(void *p_client) {
         strncpy(np->name, nickname, LENGTH_NAME);
         printf("%s(%s)(%d) join the BINGO game.\n", np->name, np->ip, np->data);
         sprintf(send_buffer, "%s(%s) join the BINGO game.", np->name, np->ip);
+        if (searchData(list,np->name)==0){
+            add_new_player(np->name);
+            getDatatoList(&list,element);
+        }
+        else{
+            // add_win_game(list,np->name);
+            // add_win_game(list,np->name);
+            // add_win_game(list,np->name);
+            // add_lose_game(list,np->name);
+        }
         send_to_all_clients(np, send_buffer);
     }
 
@@ -102,6 +217,7 @@ void client_handler(void *p_client) {
 }
 int main()
 {
+
     signal(SIGINT, catch_ctrl_c_and_exit);
 
     // Create socket
@@ -132,6 +248,7 @@ int main()
     // Initial linked list for clients
     root = newNode(server_sockfd, inet_ntoa(server_info.sin_addr));
     now = root;
+
     while (1) {
         client_sockfd = accept(server_sockfd, (struct sockaddr*) &client_info, (socklen_t*) &c_addrlen);
 

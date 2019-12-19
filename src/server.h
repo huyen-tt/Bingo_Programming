@@ -19,4 +19,5 @@ ClientList *newNode(int sockfd, char* ip) {
     return np;
 }
 
+
 #endif // LIST
