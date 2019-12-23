@@ -19,7 +19,6 @@ typedef struct
 }elementtype;
 #include "linkedlist.h"
 
-
 // Global variables
 int server_sockfd = 0, client_sockfd = 0;
 int lastest_player = 0;
@@ -151,7 +150,7 @@ void client_handler(void *p_client) {
     createSingleList(&list);
     elementtype element;
     getDatatoList(&list,element);
- 
+
     // Naming
     if (recv(np->data, nickname, LENGTH_NAME, 0) <= 0 || strlen(nickname) < 2 || strlen(nickname) >= LENGTH_NAME-1) {
         printf("%s didn't input name.\n", np->ip);
