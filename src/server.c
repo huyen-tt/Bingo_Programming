@@ -129,6 +129,103 @@ void catch_ctrl_c_and_exit(int sig) {
     exit(EXIT_SUCCESS);
 }
 
+void getDatatoList(singleList *list,elementtype element){
+    // make null the list
+    deleteSingleList(list);
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"r");
+    // counting the length of this file
+    char c;
+    int count =0;
+    for (c = getc(fp); c != EOF; c = getc(fp)) 
+    {
+        if (c == '\n') // Increment count if this character is newline 
+            count = count + 1; 
+    }
+    fclose(fp);
+    // read the data to list 
+    fp = fopen(FILEHISTORY,"r");
+    for(int i=0;i< count + 1;i++){
+        fscanf(fp, "%s %d %d", element.player, &element.point_win, &element.point_lose);
+        insertEnd(list,element);
+    }  
+    fclose(fp);
+}
+
+int searchData(singleList list, char username[30])  {  
+    list.cur = list.root; 
+    while (list.cur != NULL)  
+    {  
+        if (strcmp(list.cur->element.player, username) == 0)  
+            return 1;  
+        list.cur = list.cur->next;
+    }  
+    return 0;  
+} 
+
+void add_new_player(char ten[30]){
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"a");
+    fprintf(fp,"\n%s 0 0",ten);
+    fclose(fp);
+} 
+
+void add_win_game(singleList list,char ten[30]){
+    // Change the status of username in list to 0
+    list.cur = list.root;
+    while(list.cur != NULL){
+        if (strcmp(list.cur->element.player, ten) == 0){
+            list.cur->element.point_win ++;
+            break;
+        }
+        list.cur = list.cur->next;
+    }
+    list.cur = list.root;
+    // rewrite all list to file
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"w");
+    int i =0;
+    while(list.cur!=NULL){
+        if(i == 0){
+            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
+        }
+        else{
+            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
+        }
+        i++;
+        list.cur = list.cur->next;
+    }
+    fclose(fp);
+}
+
+void add_lose_game(singleList list,char ten[30]){
+    // Change the status of username in list to 0
+    list.cur = list.root;
+    while(list.cur != NULL){
+        if (strcmp(list.cur->element.player, ten) == 0){
+            list.cur->element.point_lose ++;
+            break;
+        }
+        list.cur = list.cur->next;
+    }
+    list.cur = list.root;
+    // rewrite all list to file
+    FILE *fp;
+    fp = fopen(FILEHISTORY,"w");
+    int i =0;
+    while(list.cur!=NULL){
+        if(i == 0){
+            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
+        }
+        else{
+            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
+        }
+        i++;
+        list.cur = list.cur->next;
+    }
+    fclose(fp);
+}
+
 void send_to_all_clients(ClientList *np, char tmp_buffer[]) {
     ClientList *tmp = root->link;
     while (tmp != NULL) {
@@ -177,17 +274,22 @@ void client_handler(void *p_client) {
             if (strlen(recv_buffer) == 0) {
                 continue;
             }
-            sprintf(send_buffer, "%s",recv_buffer);
-            if (lastest_player != np->data){
-                sprintf(send_buffer, "%s", recv_buffer);
+            if (strcmp(recv_buffer, "BINGO!") == 0){
+                sprintf(send_buffer, "%s is the WINNER!", np->name);
+            } else {
+                sprintf(send_buffer, "%s choose %s",np->name,recv_buffer);
+                if (lastest_player != np->data){
+                    sprintf(send_buffer, "%s choose %s",np->name, recv_buffer);
+                }
+                else{
+                    printf("Not turn!\n");
+                    continue;
+                }
             }
-            else{
-                printf("Not turn!\n");
-                continue;
-            }
+            
         } else if (receive == 0 || strcmp(recv_buffer, "exit") == 0) {
-            printf("%s(%s)(%d) leave the game.\n", np->name, np->ip, np->data);
-            sprintf(send_buffer, "%s(%s) leave the game.", np->name, np->ip);
+            printf("%s  leave the game.\n", np->name, np->data);
+            sprintf(send_buffer, "%s leave the game.", np->name);
             leave_flag = 1;
         } else {
             printf("Fatal Error: -1\n");
@@ -208,10 +310,14 @@ void client_handler(void *p_client) {
     }
     free(np);
 }
-int main()
+int main(int argc, char const *argv[])
 {
 
     signal(SIGINT, catch_ctrl_c_and_exit);
+    if (argc != 2){
+        fprintf(stderr, "Run the port number according to the command line parameter as follows: %s <PortNumber>\n", argv[0]);
+        return 1;
+    }
 
     // Create socket
     server_sockfd = socket(AF_INET , SOCK_STREAM , 0);
@@ -228,7 +334,7 @@ int main()
     memset(&client_info, 0, c_addrlen);
     server_info.sin_family = PF_INET;
     server_info.sin_addr.s_addr = INADDR_ANY;
-    server_info.sin_port = htons(8888);
+    server_info.sin_port = htons(atoi(argv[1]));
 
     // Bind and Listen
     bind(server_sockfd, (struct sockaddr *)&server_info, s_addrlen);
