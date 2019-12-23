@@ -144,6 +144,15 @@ void send_to_all_clients(ClientList *np, char tmp_buffer[]) {
         tmp = tmp->link;
     }
 }
+void add_lose_to_all_loser(ClientList *np, char tmp_buffer[],singleList list) {
+    ClientList *tmp = root->link;
+    while (tmp != NULL) {
+        if (np->data != tmp->data) { // all clients except itself.
+            add_lose_game(list, tmp->name);
+        }
+        tmp = tmp->link;
+    }
+}
 
 void client_handler(void *p_client) {
     int leave_flag = 0;
@@ -215,6 +224,11 @@ void client_handler(void *p_client) {
         } else {
             printf("Fatal Error: -1\n");
             leave_flag = 1;
+        }
+        if (strcmp(recv_buffer,"BINGO!")==0)
+        {
+            add_win_game(list, np->name);
+            add_lose_to_all_loser(np,send_buffer,list);
         }
         send_to_all_clients(np, send_buffer);
         lastest_player = np->data;
