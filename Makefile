@@ -3,11 +3,11 @@ CFLAGS=-O3 -Wall
 LIBS=-pthread
 SRC=src
 
-all: server.out client.out
-server.out: server.o
-	$(CC) $(CFLAGS) $(LIBS) -o server.out server.o
-client.out: client.o string.o
-	$(CC) $(CFLAGS) $(LIBS) -o client.out client.o string.o
+all: server client
+server: server.o
+	$(CC) $(CFLAGS) $(LIBS) -o server server.o
+client: client.o string.o
+	$(CC) $(CFLAGS) $(LIBS) -o client client.o string.o
 server.o: $(SRC)/server.c
 	$(CC) $(CFLAGS) -c $(SRC)/server.c
 string.o: $(SRC)/string.c
