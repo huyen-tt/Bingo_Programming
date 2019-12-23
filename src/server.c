@@ -23,99 +23,7 @@ typedef struct
 int server_sockfd = 0, client_sockfd = 0;
 int lastest_player = 0;
 ClientList *root, *now;
-void getDatatoList(singleList *list,elementtype element){
-    // make null the list
-    deleteSingleList(list);
-    FILE *fp;
-    fp = fopen(FILEHISTORY,"r");
-    // counting the length of this file
-    char c;
-    int count =0;
-    for (c = getc(fp); c != EOF; c = getc(fp)) 
-    {
-        if (c == '\n') // Increment count if this character is newline 
-            count = count + 1; 
-    }
-    fclose(fp);
-    // read the data to list 
-    fp = fopen(FILEHISTORY,"r");
 
-    for(int i=0;i< count + 1;i++){
-        fscanf(fp, "%s %d %d", element.player, &element.point_win, &element.point_lose);
-        insertEnd(list,element);
-    }  
-    fclose(fp);
-}
-int searchData(singleList list, char username[30])  {  
-    list.cur = list.root; 
-    while (list.cur != NULL)  
-    {  
-        if (strcmp(list.cur->element.player, username) == 0)  
-            return 1;  
-        list.cur = list.cur->next;
-    }  
-    return 0;  
-} 
-void add_new_player(char ten[30]){
-    FILE *fp;
-    fp = fopen(FILEHISTORY,"a");
-    fprintf(fp,"\n%s 0 0",ten);
-    fclose(fp);
-} 
-void add_win_game(singleList list,char ten[30]){
-    // Change the status of username in list to 0
-    list.cur = list.root;
-    while(list.cur != NULL){
-        if (strcmp(list.cur->element.player, ten) == 0){
-            list.cur->element.point_win ++;
-            break;
-        }
-        list.cur = list.cur->next;
-    }
-    list.cur = list.root;
-    // rewrite all list to file
-    FILE *fp;
-    fp = fopen(FILEHISTORY,"w");
-    int i =0;
-    while(list.cur!=NULL){
-        if(i == 0){
-            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
-        }
-        else{
-            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
-        }
-        i++;
-        list.cur = list.cur->next;
-    }
-    fclose(fp);
-}
-void add_lose_game(singleList list,char ten[30]){
-    // Change the status of username in list to 0
-    list.cur = list.root;
-    while(list.cur != NULL){
-        if (strcmp(list.cur->element.player, ten) == 0){
-            list.cur->element.point_lose ++;
-            break;
-        }
-        list.cur = list.cur->next;
-    }
-    list.cur = list.root;
-    // rewrite all list to file
-    FILE *fp;
-    fp = fopen(FILEHISTORY,"w");
-    int i =0;
-    while(list.cur!=NULL){
-        if(i == 0){
-            fprintf(fp,"%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);
-        }
-        else{
-            fprintf(fp,"\n%s %d %d",list.cur->element.player, list.cur->element.point_win, list.cur->element.point_lose);           
-        }
-        i++;
-        list.cur = list.cur->next;
-    }
-    fclose(fp);
-}
 void catch_ctrl_c_and_exit(int sig) {
     ClientList *tmp;
     while (root != NULL) {
@@ -276,7 +184,20 @@ void client_handler(void *p_client) {
             }
             if (strcmp(recv_buffer, "BINGO!") == 0){
                 sprintf(send_buffer, "%s is the WINNER!", np->name);
-            } else {
+            } 
+            if (strcmp(recv_buffer, "Show achievements") == 0)
+            {
+            	getDatatoList(&list, element);
+            	list.cur = list.root;
+            	while (list.cur != NULL)  
+			    {   
+			        if (strcmp(list.cur->element.player, np->name) == 0)  
+			            sprintf(send_buffer, "*** %s's achievements ***\n\tGame win: %d\n\tGame lose: %d", np->name, list.cur->element.point_win, list.cur->element.point_lose);
+			    		list.cur = list.cur->next;
+			    }  
+
+            }
+            else {
                 sprintf(send_buffer, "%s choose %s",np->name,recv_buffer);
                 if (lastest_player != np->data){
                     sprintf(send_buffer, "%s choose %s",np->name, recv_buffer);

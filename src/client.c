@@ -112,7 +112,6 @@ void recv_msg_handler() {
             printf("\r%s\n", receiveMessage);
             str_overwrite_stdout();
             receiveNumber = string_split(receiveMessage);
-            printf("%c\n",receiveNumber );
             int num = atoi(receiveNumber);
             receiveNumber[0] = "";
             receiveNumber[1] = "";
@@ -168,7 +167,7 @@ void menu(){
     printf("||,,,,,/  || ||     \\||  \\,,,,,/    \\ ,,,,/  \n\n");
     printf("Choose 1-3:\n");
     printf("1. Start game\n");
-    printf("2. See history\n");
+    printf("2. Show user's achievements\n");
     printf("3. Exit\n");
 }
 
@@ -208,6 +207,8 @@ int main(int argc, char const *argv[])
     server_info.sin_family = PF_INET;
     server_info.sin_addr.s_addr = inet_addr("127.0.0.1");
     server_info.sin_port = htons(atoi(argv[1]));
+    char *achieveMessage = "Show achievements";
+    char buff[1024];
 
     // Connect to Server
     int err = connect(sockfd, (struct sockaddr *)&server_info, s_addrlen);
@@ -277,8 +278,11 @@ int main(int argc, char const *argv[])
                 break;
 
             case 2:
-                printf("Cho ghep\n");
-                break;
+                send(sockfd, achieveMessage, strlen(achieveMessage),0);
+                recv(sockfd, buff, 1024 , 0);
+                recv(sockfd, buff, 1024 , 0);
+                printf("%s\n",buff );
+                break; 
             case 3:
                 catch_ctrl_c_and_exit(2);
                 break;
