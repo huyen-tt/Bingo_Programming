@@ -158,17 +158,11 @@ void client_handler(void *p_client) {
         leave_flag = 1;
     } else {
         strncpy(np->name, nickname, LENGTH_NAME);
-        printf("%s(%s)(%d) join the BINGO game.\n", np->name, np->ip, np->data);
-        sprintf(send_buffer, "%s(%s) join the BINGO game.", np->name, np->ip);
+        printf("%s (%d) join the BINGO game.\n", np->name, np->data);
+        sprintf(send_buffer, "%s join the BINGO game.", np->name);
         if (searchData(list,np->name)==0){
             add_new_player(np->name);
             getDatatoList(&list,element);
-        }
-        else{
-            // add_win_game(list,np->name);
-            // add_win_game(list,np->name);
-            // add_win_game(list,np->name);
-            // add_lose_game(list,np->name);
         }
         send_to_all_clients(np, send_buffer);
     }
