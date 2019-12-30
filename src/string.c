@@ -15,3 +15,8 @@ void str_overwrite_stdout() {
     printf("\r%s", "> ");
     fflush(stdout);
 }
+
+void back_menu(){
+	printf("Press ENTER to go back MENU\n");
+	getchar();
+}

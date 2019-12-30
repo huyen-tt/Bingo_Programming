@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "proto.h"
-#include "string.h"
+
 
 #define BOARD_SIZE 5
 
@@ -17,9 +17,11 @@
 volatile sig_atomic_t flag = 0;
 int sockfd = 0;
 int chon;
+int back;
 int board[BOARD_SIZE][BOARD_SIZE];
 int array[BOARD_SIZE*BOARD_SIZE];
 char nickname[LENGTH_NAME] = {};
+char buff[1024];
 
 void catch_ctrl_c_and_exit(int sig) {
     flag = 1;
@@ -110,6 +112,10 @@ void recv_msg_handler() {
         int receive = recv(sockfd, receiveMessage, LENGTH_SEND, 0);
         if (receive > 0) {
             printf("\r%s\n", receiveMessage);
+            if(strcmp(receiveMessage, "Game Over!")==0){
+            	back =1;
+            	break;
+            }
             str_overwrite_stdout();
             receiveNumber = string_split(receiveMessage);
             int num = atoi(receiveNumber);
@@ -121,9 +127,8 @@ void recv_msg_handler() {
             if(count == 3){
                 printf(" BINGO! You're Winer\n");
                 send(sockfd, winnerMessage, strlen(winnerMessage),0);
-                chon =4;
-                break;
             }
+
         } else if (receive == 0) {
             break;
         } else { 
@@ -147,8 +152,6 @@ void send_msg_handler() {
             }
         }
         send(sockfd, message, LENGTH_MSG, 0);
-        // int num = atoi(message);
-        // print_matrix(num);
         if (strcmp(message, "exit") == 0) {
             break;
         }
@@ -157,7 +160,7 @@ void send_msg_handler() {
 }
 
 void menu(){
-    system("clear"); 
+    // system("clear"); 
     printf("%c[1;33m",27); 
     printf("\n\n||'''''\\  || ||\\     ||  /'''''\\    /'''''\\ \n");
     printf("||     || || || \\    || ||         ||     || \n");
@@ -208,7 +211,7 @@ int main(int argc, char const *argv[])
     server_info.sin_addr.s_addr = inet_addr("127.0.0.1");
     server_info.sin_port = htons(atoi(argv[1]));
     char *achieveMessage = "Show achievements";
-    char buff[1024];
+  
 
     // Connect to Server
     int err = connect(sockfd, (struct sockaddr *)&server_info, s_addrlen);
@@ -226,75 +229,87 @@ int main(int argc, char const *argv[])
     send(sockfd, nickname, LENGTH_NAME, 0);
 
     //Menu
-
+	
     do {
+    	back = 0;
         menu();
         scanf("%d",&chon);
-        switch(chon){
-            case 1: 
-                // Nhap matric
-                printf("Enter 25 numbers from 1 to 25\n");
-                int m=0;
-                for(int i = 0;i < BOARD_SIZE; ++i){
-                    for (int j = 0; j < BOARD_SIZE; ++j)
-                    {   
-                        int check;
-                        do{
-                            check =0;
-                            printf("[%d, %d]= ", i,j);
-                            scanf("%d",&board[i][j]);
-                            array[m] = board[i][j];
-                            m++;
-                            for(int k = 0; k < m; ++k){
-                                for (int h = 0; h < k; ++h)
-                                {
-                                    if ((array[h] == array[k]) || (array[k] < 1) || (array[k] > 25)){
-                                        check = 1;
-                                    }
+        if (chon == 1){
+            // Nhap matric
+            printf("Enter 25 numbers from 1 to 25\n");
+            int m=0;
+            for(int i = 0;i < BOARD_SIZE; ++i){
+                for (int j = 0; j < BOARD_SIZE; ++j)
+                {   
+                    int check;
+                    do{
+                        check =0;
+                        printf("[%d, %d]= ", i,j);
+                        scanf("%d",&board[i][j]);
+                        array[m] = board[i][j];
+                        m++;
+                        for(int k = 0; k < m; ++k){
+                            for (int h = 0; h < k; ++h)
+                            {
+                                if ((array[h] == array[k]) || (array[k] < 1) || (array[k] > 25)){
+                                    check = 1;
                                 }
                             }
-                            if (check ==1 ){
-                                printf("Nhap lai\n");
-                                --m;
-                            }
+                        }
+                        if (check ==1 ){
+                            printf("Nhap lai\n");
+                            --m;
+                        }
                                 
-                        }while(check == 1);
-                    }
+                    }while(check == 1);
                 }
-
-                print_matrix(0);
-
-                pthread_t send_msg_thread;
-                if (pthread_create(&send_msg_thread, NULL, (void *) send_msg_handler, NULL) != 0) {
-                    printf ("Create pthread error!\n");
-                    exit(EXIT_FAILURE);
-                }
-
-                pthread_t recv_msg_thread;
-                if (pthread_create(&recv_msg_thread, NULL, (void *) recv_msg_handler, NULL) != 0) {
-                    printf ("Create pthread error!\n");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-
-            case 2:
-                send(sockfd, achieveMessage, strlen(achieveMessage),0);
-                recv(sockfd, buff, 1024 , 0);
-                recv(sockfd, buff, 1024 , 0);
-                printf("%s\n",buff );
-                break; 
-            case 3:
-                catch_ctrl_c_and_exit(2);
-                break;
-
-        }
-        while (1) {
-            if(flag) {
-                printf("\nBye\n");
-                break;
             }
+
+            print_matrix(0);
+
+            pthread_t send_msg_thread;
+            if (pthread_create(&send_msg_thread, NULL, (void *) send_msg_handler, NULL) != 0) {
+                printf ("Create pthread error!\n");
+                exit(EXIT_FAILURE);
+            }
+
+            pthread_t recv_msg_thread;
+            if (pthread_create(&recv_msg_thread, NULL, (void *) recv_msg_handler, NULL) != 0) {
+                printf ("Create pthread error!\n");
+                exit(EXIT_FAILURE);
+            }
+            while (1) {
+	            if(flag) {
+	                printf("\nBye\n");
+	                break;
+	            }
+	            if(back == 1)
+	            	break;
+	        }
+
+                
         }
-    } while(chon > 3);
+
+        if (chon == 2){
+            send(sockfd, achieveMessage, strlen(achieveMessage),0);
+            // recv(sockfd, buff, 1024, 0);
+            recv(sockfd, buff, 1024, 0);
+            printf("%s\n",buff );
+            back = 1;
+
+        }
+
+        if (chon ==3){
+            catch_ctrl_c_and_exit(2);
+        }
+        if(flag) {
+	        printf("\nBye\n");
+	        break;
+	    }
+//*********
+
+
+    } while(chon > 3 || back == 1);
 
     close(sockfd);
     return 0;

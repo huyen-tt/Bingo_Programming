@@ -1,6 +1,7 @@
-diep 0 3
-huyen 3 4
+diep 3 6
+huyen 9 9
 nguyen 8 7
-minh 0 5
-hieu 3 1
+minh 6 9
+hieu 8 11
 nhomnhom 5 0
+su 5 3

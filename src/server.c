@@ -153,6 +153,17 @@ void add_lose_to_all_loser(ClientList *np, char tmp_buffer[],singleList list) {
         tmp = tmp->link;
     }
 }
+void send_to_one_client(ClientList *np, char tmp_buffer[]){
+    ClientList *tmp = root->link;
+    while(tmp != NULL) {
+        if(np-> name == tmp->name){
+            printf("Send to %s : %s\n",tmp->name, tmp_buffer );
+            send(tmp->data, tmp_buffer, LENGTH_SEND, 0);
+            break;
+        }
+        tmp = tmp->link;
+    }
+}
 
 void client_handler(void *p_client) {
     int leave_flag = 0;
@@ -172,12 +183,12 @@ void client_handler(void *p_client) {
     } else {
         strncpy(np->name, nickname, LENGTH_NAME);
         printf("%s (%d) join the BINGO game.\n", np->name, np->data);
-        sprintf(send_buffer, "%s join the BINGO game.", np->name);
+        // sprintf(send_buffer, "%s join the BINGO game.", np->name);
         if (searchData(list,np->name)==0){
             add_new_player(np->name);
             getDatatoList(&list,element);
         }
-        send_to_all_clients(np, send_buffer);
+        // send_to_all_clients(np, send_buffer);
     }
 
     // Conversation
@@ -193,17 +204,23 @@ void client_handler(void *p_client) {
             }
             if (strcmp(recv_buffer, "BINGO!") == 0){
                 sprintf(send_buffer, "%s is the WINNER!", np->name);
+                add_win_game(list, np->name);
+                add_lose_to_all_loser(np,send_buffer,list);
+                sprintf(send_buffer, "Game Over!");
+                send_to_all_clients(np, send_buffer);
+                lastest_player = np->data;
             } 
-            if (strcmp(recv_buffer, "Show achievements") == 0)
+            else if (strcmp(recv_buffer, "Show achievements") == 0)
             {
             	getDatatoList(&list, element);
             	list.cur = list.root;
             	while (list.cur != NULL)  
 			    {   
 			        if (strcmp(list.cur->element.player, np->name) == 0)  
-			            sprintf(send_buffer, "*** %s's achievements ***\n\tGame win: %d\n\tGame lose: %d", np->name, list.cur->element.point_win, list.cur->element.point_lose);
-			    		list.cur = list.cur->next;
-			    }  
+			            sprintf(send_buffer, "\n*** %s's achievements ***\n\tGame win: %d\n\tGame lose: %d\n\t*********", np->name, list.cur->element.point_win, list.cur->element.point_lose);
+			    	list.cur = list.cur->next;
+			    }
+                send_to_one_client(np, send_buffer); 
 
             }
             else {
@@ -212,26 +229,25 @@ void client_handler(void *p_client) {
                     sprintf(send_buffer, "%s choose %s",np->name, recv_buffer);
                 }
                 else{
-                    printf("Not turn!\n");
+                    // printf("Not turn!\n");
                     continue;
                 }
+                send_to_all_clients(np, send_buffer);
+                lastest_player = np->data;
             }
             
         } else if (receive == 0 || strcmp(recv_buffer, "exit") == 0) {
             printf("%s  leave the game.\n", np->name, np->data);
             sprintf(send_buffer, "%s leave the game.", np->name);
             leave_flag = 1;
+            send_to_all_clients(np, send_buffer);
+            lastest_player = np->data;
         } else {
-            printf("Fatal Error: -1\n");
-            leave_flag = 1;
+            // printf("Fatal Error: -1\n");
+            // leave_flag = 1;
         }
-        if (strcmp(recv_buffer,"BINGO!")==0)
-        {
-            add_win_game(list, np->name);
-            add_lose_to_all_loser(np,send_buffer,list);
-        }
-        send_to_all_clients(np, send_buffer);
-        lastest_player = np->data;
+
+        
     }
 
     // Remove Node
